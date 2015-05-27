@@ -111,7 +111,7 @@ module.exports = function(connect) {
 //            if (err) throw err;
 //            changeState('connected');
 //          });
-          break;
+//          break;
 
         case 'interval':
           setInterval(function () {
@@ -303,8 +303,10 @@ module.exports = function(connect) {
     this.getCollection(function(err, collection) {
       if (err) return callback(err);
       collection.update({sid: sid}, s, function(err, res) {
-        if (err) log.error('not able to set/update session: ' + sid);        
-        return callback(err);
+        if (err) { 
+          log.error('not able to set/update session: ' + sid);
+          return callback(err);
+        }        
         if (res.length === 0){
           // doesn't exist yet, let's create it
           collection.create(s, function(err, res) {
