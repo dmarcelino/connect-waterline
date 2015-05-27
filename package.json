@@ -1,0 +1,43 @@
+{
+  "name": "connect-waterline",
+  "version": "0.0.1",
+  "description": "Waterline session store for Express and Connect",
+  "main": "connect-waterline.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "crypto": "^0.0.3",
+    "debug-logger": "^0.4.1",
+    "lodash": "^3.9.3",
+    "waterline": "^0.10.22"
+  },
+  "devDependencies": {
+    "mocha": "*"
+  },
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dmarcelino/connect-waterline.git"
+  },
+  "keywords": [
+    "connect",
+    "waterline",
+    "session",
+    "express",
+    "sails",
+    "mongodb",
+    "mysql",
+    "postgresql",
+    "orientdb",
+    "disk"
+  ],
+  "author": "Dario Marcelino <dario@appscot.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dmarcelino/connect-waterline/issues"
+  },
+  "homepage": "https://github.com/dmarcelino/connect-waterline#readme"
+}
