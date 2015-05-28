@@ -9,9 +9,13 @@ var _ = require('lodash');
 var Waterline = require('waterline');
 
 var testAdapter = 'sails-memory';
-var testDb = 'connect-mongo-test';
-var testHost = '127.0.0.1';
-var testPort = 27017;
+var connection = {};
+if (process.env.ADAPTER_NAME){
+   testAdapter = process.env.ADAPTER_NAME;
+   connection = require('../integration/config/' + testAdapter + '.json').config;
+}
+
+connection.adapter = 'default';
 
 var options = {
   adapters: {
@@ -19,14 +23,10 @@ var options = {
   },
   collection: 'sessionTable',
   connections: {
-    'connect-waterline': {
-      adapter: 'default',
-      database: testDb,
-      host: testHost,
-      port: testPort
-    }
+    'connect-waterline': connection
   }
 };
+
 var lazyOptions = _.defaults({ touchAfter: 2 /*seconds*/ }, options) 
 
 // Create a connect cookie instance

@@ -13,10 +13,14 @@
     "waterline": "^0.10.22"
   },
   "devDependencies": {
+    "async": "^1.0.0",
     "express-session": "^1.11.2",
     "mocha": "*",
     "sails-disk": "^0.10.8",
-    "sails-memory": "^0.10.4"
+    "sails-memory": "^0.10.4",
+    "sails-mongo": "^0.11.2",
+    "sails-orientdb": "^0.10.50",
+    "sails-postgresql": "^0.10.15"
   },
   "scripts": {
     "test": "mocha test/unit"
