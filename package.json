@@ -13,7 +13,9 @@
     "waterline": "^0.10.22"
   },
   "devDependencies": {
-    "mocha": "*"
+    "express-session": "^1.11.2",
+    "mocha": "*",
+    "sails-memory": "^0.10.4"
   },
   "scripts": {
     "test": "make test"
