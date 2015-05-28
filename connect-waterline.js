@@ -142,7 +142,11 @@ module.exports = function(connect) {
   
       self.waterline = new Waterline();
       
-      var collection = _.defaults({ tableName: options.collection || 'sessions' }, module.exports.defaultModelDefinition);
+      // Apply options to collection definition
+      var collection = _.cloneDeep(module.exports.defaultModelDefinition);
+      collection.tableName = options.collection || 'sessions';
+      collection.attributes.session = options.stringify === false ? 'json' : 'string'; 
+      
       self.waterline.loadCollection(Waterline.Collection.extend(collection));
       
       self.waterline.initialize({
@@ -213,7 +217,7 @@ module.exports = function(connect) {
     var query = {
       sid: sid,
       or: [
-        { expires: '' },
+        { has_expires: false },
         { expires: { '>': new Date() } }
       ]
     };
@@ -439,10 +443,22 @@ module.exports.defaultModelDefinition = {
       type: 'string',
       primaryKey: true,
       unique: true,
-      required: true
+      required: true,
     },
     session: 'string',
     expires: 'date',
+    has_expires: 'boolean',
     lastModified: 'date'
+  },
+  
+  // Ugly workaround for detecting empty expires:
+  // https://github.com/balderdashy/waterline/issues/189
+  beforeValidate: function(values, next) {
+    if (values.expires) {
+      values.has_expires = true;
+    } else {
+      values.has_expires = false;
+    }
+    next();
   }
 };

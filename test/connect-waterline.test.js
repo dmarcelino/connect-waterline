@@ -5,6 +5,7 @@ var session = require('express-session');
 var ConnectWaterline = require('../connect-waterline');
 var WaterlineStore = ConnectWaterline(session);
 var assert = require('assert');
+var _ = require('lodash');
 
 var defaultOptions = {w: 1};
 var testAdapter = 'sails-memory';
@@ -41,17 +42,6 @@ var make_cookie = function() {
 
   return cookie;
 };
-
-function getWaterlineConnection() {
-  return {
-    adapter: 'default',
-    database: testDb,
-    host: testHost,
-    port: testPort,
-    user: '',
-    password: ''
-  };
-}
 
 function getWaterlineModel(cb) {  // getMongooseConnection()
   var waterline = new Waterline();
@@ -105,7 +95,13 @@ var assert_session_equals = function(sid, data, session) {
     for (var prop in session.session) {
       if (prop === 'cookie') {
         // Make sure the cookie is intact
-        assert.deepEqual(session.session.cookie, data.cookie.toJSON());
+        
+        // deepEqual is choking with expires date comparison, let's circumvent that for now
+        assert.equal(session.session.cookie.expires, data.cookie.expires.toJSON());
+        var cookieJSON = data.cookie.toJSON();
+        delete session.session.cookie.expires;
+        delete cookieJSON.expires;
+        assert.deepEqual(session.session.cookie, cookieJSON);
       }
       else {
         assert.deepEqual(session.session[prop], data[prop]);
@@ -154,3 +150,106 @@ exports.test_set = function(done) {
     });
   });
 };
+
+exports.test_set_no_stringify = function(done) {
+  open_db(_.defaults({ stringify: false }, options), function(store, db, collection) {
+    var sid = 'test_set-sid';
+    var data = make_data();
+
+    store.set(sid, data, function(err) {
+      assert.equal(err, null);
+
+      // Verify it was saved
+      collection.findOne({sid: sid}, function(err, session) {
+        assert_session_equals(sid, data, session);
+
+        cleanup(store, db, collection, function() {
+          done();
+        });
+      });
+    });
+  });
+};
+
+exports.test_session_cookie_overwrite_no_stringify = function(done) {
+  var origSession = make_data();
+  var cookie = origSession.cookie;
+
+  open_db(_.defaults({ stringify: false }, options), function(store, db, collection) {
+    var sid = 'test_set-sid';
+    store.set(sid, origSession, function(err) {
+      assert.equal(err, null);
+
+      collection.findOne({sid: sid}, function(err, session) {
+        // Make sure cookie came out intact
+        assert.strictEqual(origSession.cookie, cookie);
+
+        // Make sure the fields made it back intact
+        assert.equal(cookie.expires.toJSON(), session.session.cookie.expires);
+        assert.equal(cookie.secure, session.session.cookie.secure);
+
+        cleanup(store, db, collection, function() {
+          done();
+        });
+      });
+    });
+  });
+};
+
+exports.test_set_expires = function(done) {
+  open_db(options, function(store, db, collection) {
+    var sid = 'test_set_expires-sid';
+    var data = make_data();
+
+    store.set(sid, data, function(err) {
+      assert.equal(err, null);
+
+      // Verify it was saved
+      collection.findOne({sid: sid}, function(err, session) {
+        assert_session_equals(sid, data, session);
+
+        cleanup(store, db, collection, function() {
+          done();
+        });
+      });
+    });
+  });
+};
+
+exports.test_set_expires_no_stringify = function(done) {
+  open_db(_.defaults({ stringify: false }, options), function(store, db, collection) {
+    var sid = 'test_set_expires-sid';
+    var data = make_data();
+
+    store.set(sid, data, function(err) {
+      assert.equal(err, null);
+
+      // Verify it was saved
+      collection.findOne({sid: sid}, function(err, session) {
+        assert_session_equals(sid, data, session);
+
+        cleanup(store, db, collection, function() {
+          done();
+        });
+      });
+    });
+  });
+};
+
+exports.test_get = function(done) {
+  open_db(options, function(store, db, collection) {
+    var sid = 'test_get-sid';
+    collection.create({sid: sid, session: JSON.stringify({key1: 1, key2: 'two'})}, function(err, ses) {
+      assert.equal(err, null);
+      store.get(sid, function(err, session) {
+        assert.equal(err, null);
+        console.log('session:', session);
+        assert.deepEqual(session, {key1: 1, key2: 'two'});
+        cleanup(store, db, collection, function() {
+          done();
+        });
+      });
+    });
+  });
+};
+
