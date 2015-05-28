@@ -6,6 +6,7 @@ var ConnectWaterline = require('../connect-waterline');
 var WaterlineStore = ConnectWaterline(session);
 var assert = require('assert');
 var _ = require('lodash');
+var Waterline = require('waterline');
 
 var defaultOptions = {w: 1};
 var testAdapter = 'sails-memory';
@@ -43,10 +44,18 @@ var make_cookie = function() {
   return cookie;
 };
 
-function getWaterlineModel(cb) {  // getMongooseConnection()
+function getWaterlineModel(stringify, cb) {  // getMongooseConnection()
+  if(!cb && stringify){
+    cb = stringify;
+    stringify = undefined;
+  }
   var waterline = new Waterline();
   
-  var collection = _.defaults({ tableName: 'sessions' }, ConnectWaterline.defaultModelDefinition);
+  // Apply options to collection definition
+  var collection = _.cloneDeep(ConnectWaterline.defaultModelDefinition);
+  collection.tableName = 'custom_sessions';
+  collection.attributes.session = stringify === false ? 'json' : 'string'; 
+
   waterline.loadCollection(Waterline.Collection.extend(collection));
   
   waterline.initialize({
@@ -97,7 +106,7 @@ var assert_session_equals = function(sid, data, session) {
         // Make sure the cookie is intact
         
         // deepEqual is choking with expires date comparison, let's circumvent that for now
-        assert.equal(session.session.cookie.expires, data.cookie.expires.toJSON());
+        assert.equal(new Date(session.session.cookie.expires).getTime(), new Date(data.cookie.expires).getTime());
         var cookieJSON = data.cookie.toJSON();
         delete session.session.cookie.expires;
         delete cookieJSON.expires;
@@ -307,4 +316,176 @@ exports.test_options_no_db = function(done) {
     Error);
 
   done();
+};
+
+
+/* Tests with instantiated model */
+
+exports.test_set_with_raw_db = function(done) {
+  getWaterlineModel(function(err, model){
+    assert.equal(err, null);
+    open_db({ model: model }, function(store, db, collection) {
+      var sid = 'test_set-sid';
+      var data = make_data();
+  
+      store.set(sid, data, function(err) {
+        assert.equal(err, null);
+  
+        // Verify it was saved
+        collection.findOne({sid: sid}, function(err, session) {
+          assert_session_equals(sid, data, session);
+  
+          cleanup(store, db, collection, function() {
+            done();
+          });
+        });
+      });
+    });
+  });
+};
+
+exports.test_set_no_stringify_with_raw_db = function(done) {
+  getWaterlineModel(false, function(err, model){
+    assert.equal(err, null);
+    open_db({model: model, stringify: false}, function(store, db, collection) {
+      var sid = 'test_set-sid';
+      var data = make_data();
+  
+      store.set(sid, data, function(err) {
+        assert.equal(err, null);
+  
+        // Verify it was saved
+        collection.findOne({sid: sid}, function(err, session) {
+          assert_session_equals(sid, data, session);
+  
+          cleanup(store, db, collection, function() {
+            done();
+          });
+        });
+      });
+    });
+  });
+};
+
+exports.test_set_expires_with_raw_db = function(done) {
+  getWaterlineModel(function(err, model){
+    assert.equal(err, null);
+    open_db({ model: model }, function(store, db, collection) {
+      var sid = 'test_set_expires-sid';
+      var data = make_data();
+  
+      store.set(sid, data, function(err) {
+        assert.equal(err, null);
+  
+        // Verify it was saved
+        collection.findOne({sid: sid}, function(err, session) {
+          assert_session_equals(sid, data, session);
+  
+          cleanup(store, db, collection, function() {
+            done();
+          });
+        });
+      });
+    });
+  });
+};
+
+exports.test_set_expires_no_stringify_with_raw_db = function(done) {
+  getWaterlineModel(false, function(err, model){
+    assert.equal(err, null);
+    open_db({model: model, stringify: false}, function(store, db, collection) {
+      var sid = 'test_set_expires-sid';
+      var data = make_data();
+  
+      store.set(sid, data, function(err) {
+        assert.equal(err, null);
+  
+        // Verify it was saved
+        collection.findOne({sid: sid}, function(err, session) {
+          assert_session_equals(sid, data, session);
+  
+          cleanup(store, db, collection, function() {
+            done();
+          });
+        });
+      });
+    });
+  });
+};
+
+exports.test_get_with_raw_db = function(done) {
+  getWaterlineModel(function(err, model){
+    assert.equal(err, null);
+    open_db({ model: model }, function(store, db, collection) {
+      var sid = 'test_get-sid';
+      collection.create({sid: sid, session: JSON.stringify({key1: 1, key2: 'two'})}, function() {
+        store.get(sid, function(err, session) {
+          assert.equal(err, null);
+          assert.deepEqual(session, {key1: 1, key2: 'two'});
+  
+          cleanup(store, db, collection, function() {
+            done();
+          });
+        });
+      });
+    });
+  });
+};
+
+exports.test_length_with_raw_db = function(done) {
+  getWaterlineModel(function(err, model){
+    assert.equal(err, null);
+    open_db({ model: model }, function(store, db, collection) {
+      var sid = 'test_length-sid';
+      collection.create({sid: sid, session: JSON.stringify({key1: 1, key2: 'two'})}, function() {
+        store.length(function(err, length) {
+          assert.equal(err, null);
+          assert.strictEqual(length, 1);
+  
+          cleanup(store, db, collection, function() {
+            done();
+          });
+        });
+      });
+    });
+  });
+};
+
+exports.test_destroy_ok_with_raw_db = function(done) {
+  getWaterlineModel(function(err, model){
+    assert.equal(err, null);
+    open_db({ model: model }, function(store, db, collection) {
+      var sid = 'test_destroy_ok-sid';
+      collection.create({sid: sid, session: JSON.stringify({key1: 1, key2: 'two'})}, function() {
+        store.destroy(sid, function(err) {
+          assert.equal(err, null);
+  
+          cleanup(store, db, collection, function() {
+            done();
+          });
+        });
+      });
+    });
+  });
+};
+
+exports.test_clear_with_raw_db = function(done) {
+  getWaterlineModel(function(err, model){
+    assert.equal(err, null);
+    open_db({ model: model }, function(store, db, collection) {
+    var sid = 'test_length-sid';
+      collection.create({sid: sid, key1: 1, key2: 'two'}, function() {
+        store.clear(function() {
+          collection.count(function(err, count) {
+            assert.equal(err, null);
+            assert.strictEqual(count, 0);
+  
+            cleanup(store, db, collection, function() {
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
 };
