@@ -8,7 +8,6 @@ var assert = require('assert');
 var _ = require('lodash');
 var Waterline = require('waterline');
 
-var defaultOptions = { w: 1 };
 var testAdapter = 'sails-memory';
 var testDb = 'connect-mongo-test';
 var testHost = '127.0.0.1';
@@ -28,11 +27,7 @@ var options = {
     }
   }
 };
-var lazyOptions = {
-  db: testDb,
-  host: testHost,
-  touchAfter: 2 // seconds
-};
+var lazyOptions = _.defaults({ touchAfter: 2 /*seconds*/ }, options) 
 
 // Create a connect cookie instance
 var make_cookie = function () {
@@ -604,7 +599,7 @@ exports.test_session_touch = function (done) {
   open_db(options, function (store, db, collection) {
 
     var sid = 'test_touch-sid',
-        data = make_data();
+      data = make_data();
 
     store.set(sid, data, function (err) {
       assert.equal(err, null);
@@ -631,6 +626,90 @@ exports.test_session_touch = function (done) {
 
           });
         });
+      });
+    });
+  });
+};
+
+exports.test_session_lazy_touch_sync = function (done) {
+  open_db(lazyOptions, function (store, db, collection) {
+
+    var sid = 'test_lazy_touch-sid-sync',
+      data = make_data(),
+      lastModifiedBeforeTouch,
+      lastModifiedAfterTouch;
+
+    store.set(sid, data, function (err) {
+      assert.equal(err, null);
+
+      // Verify it was saved
+      collection.findOne({ sid: sid }, function (err, session) {
+        assert.equal(err, null);
+
+        lastModifiedBeforeTouch = session.lastModified.getTime();
+
+        // touch the session
+        store.touch(sid, session, function (err) {
+          assert.equal(err, null);
+
+          collection.findOne({ sid: sid }, function (err, session2) {
+            assert.equal(err, null);
+
+            lastModifiedAfterTouch = session2.lastModified.getTime();
+
+            assert.strictEqual(lastModifiedBeforeTouch, lastModifiedAfterTouch);
+
+            cleanup(store, db, collection, function () {
+              done();
+            });
+
+          });
+        });
+      });
+    });
+  });
+};
+
+
+exports.test_session_lazy_touch_async = function (done) {
+  open_db(lazyOptions, function (store, db, collection) {
+
+    var sid = 'test_lazy_touch-sid',
+      data = make_data(),
+      lastModifiedBeforeTouch,
+      lastModifiedAfterTouch;
+
+    store.set(sid, data, function (err) {
+      assert.equal(err, null);
+
+      // Verify it was saved
+      collection.findOne({ sid: sid }, function (err, session) {
+        assert.equal(err, null);
+
+        lastModifiedBeforeTouch = session.lastModified.getTime();
+
+        setTimeout(function () {
+          
+          // touch the session
+          store.touch(sid, session, function (err) {
+            assert.equal(err, null);
+
+            collection.findOne({ sid: sid }, function (err, session2) {
+              assert.equal(err, null);
+
+              lastModifiedAfterTouch = session2.lastModified.getTime();
+
+              assert.ok(lastModifiedAfterTouch > lastModifiedBeforeTouch);
+
+              cleanup(store, db, collection, function () {
+                done();
+              });
+
+            });
+          });
+
+        }, 3000);
+
       });
     });
   });
