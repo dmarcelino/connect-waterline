@@ -489,3 +489,68 @@ exports.test_clear_with_model = function(done) {
     });
   });
 };
+
+exports.test_set_default_expiration = function(done) {
+  var defaultExpirationTime = 10101;  // defaultExpirationTime is deprecated, so we use ttl
+  var ttl = defaultExpirationTime/1000;
+  var optionsWithExpirationTime = _.defaults({ ttl: ttl }, options);
+
+  open_db(optionsWithExpirationTime, function(store, db, collection) {
+    var sid = 'test_set_expires-sid';
+    var data = make_data_no_cookie();
+
+    var timeBeforeSet = new Date().valueOf();
+
+    store.set(sid, data, function(err) {
+      assert.equal(err, null);
+
+      // Verify it was saved
+      collection.findOne({sid: sid}, function(err, session) {
+        assert.deepEqual(session.session, JSON.stringify(data));
+        assert.strictEqual(session.sid, sid);
+        assert.notEqual(session.expires, null);
+
+        var timeAfterSet = new Date().valueOf();
+
+        assert.ok(timeBeforeSet + defaultExpirationTime <= session.expires.valueOf());
+        assert.ok(session.expires.valueOf() <= timeAfterSet + defaultExpirationTime, 
+          session.expires.valueOf() + ' <= ' + (timeAfterSet + defaultExpirationTime) + ', diff: ' + 
+          (timeAfterSet + defaultExpirationTime - session.expires.valueOf()) + ' ms');
+
+        cleanup(store, db, collection, function() {
+          done();
+        });
+      });
+    });
+  });
+};
+
+exports.test_set_witout_default_expiration = function(done) {
+  var defaultExpirationTime = 1000 * 60 * 60 * 24 * 14;
+  open_db(options, function(store, db, collection) {
+    var sid = 'test_set_expires-sid';
+    var data = make_data_no_cookie();
+
+    var timeBeforeSet = new Date().valueOf();
+
+    store.set(sid, data, function(err) {
+      assert.equal(err, null);
+
+      // Verify it was saved
+      collection.findOne({sid: sid}, function(err, session) {
+        assert.deepEqual(session.session, JSON.stringify(data));
+        assert.strictEqual(session.sid, sid);
+        assert.notEqual(session.expires, null);
+
+        var timeAfterSet = new Date().valueOf();
+
+        assert.ok(timeBeforeSet + defaultExpirationTime <= session.expires.valueOf());
+        assert.ok(session.expires.valueOf() <= timeAfterSet + defaultExpirationTime);
+
+        cleanup(store, db, collection, function() {
+          done();
+        });
+      });
+    });
+  });
+};
