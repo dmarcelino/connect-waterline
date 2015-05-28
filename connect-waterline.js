@@ -16,7 +16,7 @@ var defaultOptions = {
   stringify: true,
   hash: false,
   ttl: 60 * 60 * 24 * 14, // 14 days
-  autoRemove: 'native',
+  autoRemove: 'interval',
   autoRemoveInterval: 10
 };
 
@@ -131,6 +131,7 @@ module.exports = function(connect) {
     
     function initWithWaterlineModel(){
       process.nextTick(function(){
+        self.waterline = options.model.waterline;  // TODO: double check this
         connectionReady(null, options.model);
       });
     }
@@ -139,24 +140,12 @@ module.exports = function(connect) {
       var adapters = options.adapters || {};
       var connections = options.connections || {};
   
-      var modelDefinition = {
-        identity: 'sessions',
-        tableName: options.collection,
-        attributes: {
-          sid: {
-            type: 'string',
-            unique: true
-          },
-          session: 'string',
-          expires: 'date',
-          lastModified: 'date'
-        }
-      };
-      
       self.waterline = new Waterline();
-      waterline.loadCollection(Waterline.Collection.extend(modelDefinition));
       
-      waterline.initialize({
+      var collection = _.defaults({ tableName: options.collection || 'sessions' }, module.exports.defaultModelDefinition);
+      self.waterline.loadCollection(Waterline.Collection.extend(collection));
+      
+      self.waterline.initialize({
         adapters: adapters,
         connections: connections
       }, function(err, ontology){
@@ -433,4 +422,27 @@ module.exports = function(connect) {
   };
 
   return WaterlineStore;
+};
+
+
+module.exports.defaultModelDefinition = {
+  identity: 'sessions',
+  
+  connection: 'connect-waterline',
+  
+  autoPK: false,
+  autoCreatedAt: false,
+  associationFinders: false,
+  
+  attributes: {
+    sid: {
+      type: 'string',
+      primaryKey: true,
+      unique: true,
+      required: true
+    },
+    session: 'string',
+    expires: 'date',
+    lastModified: 'date'
+  }
 };
