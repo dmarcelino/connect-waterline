@@ -253,3 +253,58 @@ exports.test_get = function(done) {
   });
 };
 
+exports.test_length = function(done) {
+  open_db(options, function(store, db, collection) {
+    var sid = 'test_length-sid';
+    collection.create({sid: sid, session: JSON.stringify({key1: 1, key2: 'two'})}, function() {
+      store.length(function(err, length) {
+        assert.equal(err, null);
+        assert.strictEqual(length, 1);
+        cleanup(store, db, collection, function() {
+          done();
+        });
+      });
+    });
+  });
+};
+
+exports.test_destroy_ok = function(done) {
+  open_db(options, function(store, db, collection) {
+    var sid = 'test_destroy_ok-sid';
+    collection.create({_id: sid, session: JSON.stringify({key1: 1, key2: 'two'})}, function() {
+      store.destroy(sid, function(err) {
+        assert.equal(err, null);
+        cleanup(store, db, collection, function() {
+          done();
+        });
+      });
+    });
+  });
+};
+
+exports.test_clear = function(done) {
+  open_db(options, function(store, db, collection) {
+    var sid = 'test_length-sid';
+    collection.create({_id: sid, key1: 1, key2: 'two'}, function() {
+      store.clear(function() {
+        collection.count(function(err, count) {
+          assert.strictEqual(count, 0);
+
+          cleanup(store, db, collection, function() {
+            done();
+          });
+        });
+      });
+    });
+  });
+};
+
+exports.test_options_no_db = function(done) {
+  assert.throws(
+    function() {
+      new MongoStore({});
+    },
+    Error);
+
+  done();
+};
