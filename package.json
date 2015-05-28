@@ -15,10 +15,11 @@
   "devDependencies": {
     "express-session": "^1.11.2",
     "mocha": "*",
+    "sails-disk": "^0.10.8",
     "sails-memory": "^0.10.4"
   },
   "scripts": {
-    "test": "make test"
+    "test": "mocha test"
   },
   "repository": {
     "type": "git",

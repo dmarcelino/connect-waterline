@@ -152,9 +152,7 @@ exports.test_set = function(done) {
       collection.findOne({sid: sid}, function(err, session) {
         assert_session_equals(sid, data, session);
 
-        cleanup(store, waterline, collection, function() {
-          done();
-        });
+        cleanup(store, waterline, collection, done);
       });
     });
   });
@@ -172,9 +170,7 @@ exports.test_set_no_stringify = function(done) {
       collection.findOne({sid: sid}, function(err, session) {
         assert_session_equals(sid, data, session);
 
-        cleanup(store, db, collection, function() {
-          done();
-        });
+        cleanup(store, db, collection, done);
       });
     });
   });
@@ -194,7 +190,7 @@ exports.test_session_cookie_overwrite_no_stringify = function(done) {
         assert.strictEqual(origSession.cookie, cookie);
 
         // Make sure the fields made it back intact
-        assert.equal(cookie.expires.toJSON(), session.session.cookie.expires);
+        assert.equal(new Date(cookie.expires).getTime(), new Date(session.session.cookie.expires).getTime());
         assert.equal(cookie.secure, session.session.cookie.secure);
 
         cleanup(store, db, collection, function() {
@@ -252,7 +248,6 @@ exports.test_get = function(done) {
       assert.equal(err, null);
       store.get(sid, function(err, session) {
         assert.equal(err, null);
-        console.log('session:', session);
         assert.deepEqual(session, {key1: 1, key2: 'two'});
         cleanup(store, db, collection, function() {
           done();
@@ -554,3 +549,54 @@ exports.test_set_witout_default_expiration = function(done) {
     });
   });
 };
+
+exports.test_set_custom_serializer = function (done) {
+  var serializerOptions = _.defaults({
+    serialize: function (obj) {
+      obj.ice = 'test-1';
+      return JSON.stringify(obj);
+    },
+    sessionType: 'string'
+  }, options);
+  open_db(serializerOptions, function (store, db, collection) {
+    var sid = 'test_set_custom_serializer-sid';
+    var data = make_data(),
+      dataWithIce = JSON.parse(JSON.stringify(data));
+
+    dataWithIce.ice = 'test-1';
+    store.set(sid, data, function (err) {
+      assert.equal(err, null);
+
+      collection.findOne({sid: sid}, function (err, session) {
+        assert.deepEqual(session.session, JSON.stringify(dataWithIce));
+        assert.strictEqual(session.sid, sid);
+
+        cleanup(store, db, collection, done);
+      });
+    });
+  });
+};
+
+exports.test_get_custom_unserializer = function (done) {
+  var unserializerOptions = _.defaults({
+    unserialize: function (obj) {
+      obj.ice = 'test-2';
+      return obj;
+    },
+  }, options);
+  open_db(unserializerOptions, function (store, db, collection) {
+    var sid = 'test_get_custom_unserializer-sid';
+    var data = make_data();
+    store.set(sid, data, function (err) {
+      assert.equal(err, null);
+      store.get(sid, function (err, session) {
+        data.ice = 'test-2';
+        data.cookie = data.cookie.toJSON();
+        assert.equal(err, null);
+        assert.deepEqual(session, data);
+        cleanup(store, db, collection, done);
+      });
+    });
+  });
+};
+
