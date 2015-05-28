@@ -143,11 +143,11 @@ module.exports = function(connect) {
       self.waterline = new Waterline();
       
       // Apply options to collection definition
-      var collection = _.cloneDeep(module.exports.defaultModelDefinition);
-      collection.tableName = options.collection || 'sessions';
-      collection.attributes.session = options.stringify === false ? 'json' : 'string'; 
+      var modelDefinition = _.cloneDeep(module.exports.defaultModelDefinition);
+      modelDefinition.tableName = options.collection || 'sessions';
+      modelDefinition.attributes.session = options.stringify === false ? 'json' : 'string'; 
       
-      self.waterline.loadCollection(Waterline.Collection.extend(collection));
+      self.waterline.loadCollection(Waterline.Collection.extend(modelDefinition));
       
       self.waterline.initialize({
         adapters: adapters,
@@ -297,7 +297,7 @@ module.exports = function(connect) {
       if (err) return callback(err);
       collection.update({sid: sid}, s, function(err, res) {
         if (err) { 
-          log.error('not able to set/update session: ' + sid);
+          log.error('not able to set/update session: ' + sid, err);
           return callback(err);
         }        
         if (res.length === 0){
