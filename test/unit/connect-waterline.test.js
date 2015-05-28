@@ -2,7 +2,7 @@
  * Module dependencies.
  */
 var session = require('express-session');
-var ConnectWaterline = require('../connect-waterline');
+var ConnectWaterline = require('../../connect-waterline');
 var WaterlineStore = ConnectWaterline(session);
 var assert = require('assert');
 var _ = require('lodash');
