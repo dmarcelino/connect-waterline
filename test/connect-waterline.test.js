@@ -321,7 +321,7 @@ exports.test_options_no_db = function(done) {
 
 /* Tests with instantiated model */
 
-exports.test_set_with_raw_db = function(done) {
+exports.test_set_with_model = function(done) {
   getWaterlineModel(function(err, model){
     assert.equal(err, null);
     open_db({ model: model }, function(store, db, collection) {
@@ -344,7 +344,7 @@ exports.test_set_with_raw_db = function(done) {
   });
 };
 
-exports.test_set_no_stringify_with_raw_db = function(done) {
+exports.test_set_no_stringify_with_model = function(done) {
   getWaterlineModel(false, function(err, model){
     assert.equal(err, null);
     open_db({model: model, stringify: false}, function(store, db, collection) {
@@ -367,7 +367,7 @@ exports.test_set_no_stringify_with_raw_db = function(done) {
   });
 };
 
-exports.test_set_expires_with_raw_db = function(done) {
+exports.test_set_expires_with_model = function(done) {
   getWaterlineModel(function(err, model){
     assert.equal(err, null);
     open_db({ model: model }, function(store, db, collection) {
@@ -390,7 +390,7 @@ exports.test_set_expires_with_raw_db = function(done) {
   });
 };
 
-exports.test_set_expires_no_stringify_with_raw_db = function(done) {
+exports.test_set_expires_no_stringify_with_model = function(done) {
   getWaterlineModel(false, function(err, model){
     assert.equal(err, null);
     open_db({model: model, stringify: false}, function(store, db, collection) {
@@ -413,7 +413,7 @@ exports.test_set_expires_no_stringify_with_raw_db = function(done) {
   });
 };
 
-exports.test_get_with_raw_db = function(done) {
+exports.test_get_with_model = function(done) {
   getWaterlineModel(function(err, model){
     assert.equal(err, null);
     open_db({ model: model }, function(store, db, collection) {
@@ -432,7 +432,7 @@ exports.test_get_with_raw_db = function(done) {
   });
 };
 
-exports.test_length_with_raw_db = function(done) {
+exports.test_length_with_model = function(done) {
   getWaterlineModel(function(err, model){
     assert.equal(err, null);
     open_db({ model: model }, function(store, db, collection) {
@@ -451,7 +451,7 @@ exports.test_length_with_raw_db = function(done) {
   });
 };
 
-exports.test_destroy_ok_with_raw_db = function(done) {
+exports.test_destroy_ok_with_model = function(done) {
   getWaterlineModel(function(err, model){
     assert.equal(err, null);
     open_db({ model: model }, function(store, db, collection) {
@@ -469,7 +469,7 @@ exports.test_destroy_ok_with_raw_db = function(done) {
   });
 };
 
-exports.test_clear_with_raw_db = function(done) {
+exports.test_clear_with_model = function(done) {
   getWaterlineModel(function(err, model){
     assert.equal(err, null);
     open_db({ model: model }, function(store, db, collection) {
