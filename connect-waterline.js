@@ -61,6 +61,7 @@ module.exports = function(connect) {
    */
 
   function WaterlineStore(options) {
+    options = _.clone(options);
     
     /* Fallback */
 
@@ -78,8 +79,10 @@ module.exports = function(connect) {
 
     if (!options.stringify || options.serialize || options.unserialize) {
       options = _.defaults(options, defaultSerializationOptions);
+      options.sessionType = options.sessionType || 'json';
     } else {
       options = _.assign(options, stringifySerializationOptions);
+      options.sessionType = options.sessionType || 'string';
     }
 
     this.options =  options;
@@ -145,7 +148,7 @@ module.exports = function(connect) {
       // Apply options to collection definition
       var modelDefinition = _.cloneDeep(module.exports.defaultModelDefinition);
       modelDefinition.tableName = options.collection || 'sessions';
-      modelDefinition.attributes.session = options.stringify === false ? 'json' : 'string'; 
+      modelDefinition.attributes.session = options.sessionType; 
       
       self.waterline.loadCollection(Waterline.Collection.extend(modelDefinition));
       
