@@ -449,9 +449,9 @@ module.exports.defaultModelDefinition = {
       required: true,
     },
     session: 'string',
-    expires: 'date',
+    expires: 'datetime',
     has_expires: 'boolean',
-    lastModified: 'date'
+    lastModified: 'datetime'
   },
   
   // Ugly workaround for detecting empty expires:
