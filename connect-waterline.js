@@ -437,14 +437,14 @@ module.exports.defaultModelDefinition = {
   
   connection: 'connect-waterline',
   
-  autoPK: false,
+  //autoPK: false,
   autoCreatedAt: false,
   associationFinders: false,
   
   attributes: {
     sid: {
       type: 'string',
-      primaryKey: true,
+      //primaryKey: true,
       unique: true,
       required: true,
     },
