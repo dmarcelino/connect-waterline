@@ -421,8 +421,8 @@ module.exports = function(connect) {
     if (!callback) callback = _.noop;
     this.getCollection(function(err, collection) {
       if (err) return callback(err);
-      collection.drop(function(err) {
-        if (err) log.error('not able to clear sessions');
+      collection.destroy({}, function(err) {
+        if (err) log.error('not able to clear sessions: ' + sid);
         callback(err);
       });
     });
