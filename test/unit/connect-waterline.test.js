@@ -14,12 +14,12 @@ if (process.env.ADAPTER_NAME){
    testAdapter = process.env.ADAPTER_NAME;
    connection = require('../integration/config/' + testAdapter + '.json').config;
 }
-
 connection.adapter = 'default';
+var Adapter = require(testAdapter);
 
 var options = {
   adapters: {
-    'default': require(testAdapter)
+    'default': Adapter
   },
   collection: 'sessionTable',
   connections: {
@@ -502,7 +502,10 @@ exports.test_set_default_expiration = function (done) {
 
         var timeAfterSet = new Date().valueOf();
 
-        assert.ok(timeBeforeSet + defaultExpirationTime <= session.expires.valueOf());
+        // +1000 because sails-postgresql only has 1s granularity
+        assert.ok(timeBeforeSet + defaultExpirationTime <= (session.expires.valueOf() + 1000),
+         (timeBeforeSet + defaultExpirationTime) + ' <= ' + session.expires.valueOf() +  ', diff: ' +
+         (session.expires.valueOf() - (timeBeforeSet + defaultExpirationTime)) + ' ms');
         assert.ok(session.expires.valueOf() <= timeAfterSet + defaultExpirationTime,
           session.expires.valueOf() + ' <= ' + (timeAfterSet + defaultExpirationTime) + ', diff: ' +
           (timeAfterSet + defaultExpirationTime - session.expires.valueOf()) + ' ms');
@@ -534,7 +537,7 @@ exports.test_set_witout_default_expiration = function (done) {
 
         var timeAfterSet = new Date().valueOf();
 
-        assert.ok(timeBeforeSet + defaultExpirationTime <= session.expires.valueOf());
+        assert.ok(timeBeforeSet + defaultExpirationTime <= session.expires.valueOf() + 1000);
         assert.ok(session.expires.valueOf() <= timeAfterSet + defaultExpirationTime);
 
         cleanup(store, db, collection, function () {
