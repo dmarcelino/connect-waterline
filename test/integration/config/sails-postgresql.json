@@ -7,5 +7,7 @@
     "port": 5432,
     "schema": true,
     "ssl": false
-  }
+  },
+  "alwaysStringify": true,
+  "skipUnserializer": true
 }
