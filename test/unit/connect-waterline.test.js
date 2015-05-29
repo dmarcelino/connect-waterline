@@ -9,12 +9,12 @@ var _ = require('lodash');
 var Waterline = require('waterline');
 
 var testAdapter = 'sails-memory';
-var connection = {};
+var settings = { config: {} };
 if (process.env.ADAPTER_NAME){
    testAdapter = process.env.ADAPTER_NAME;
-   connection = require('../integration/config/' + testAdapter + '.json').config;
+   settings = require('../integration/config/' + testAdapter + '.json');
 }
-connection.adapter = 'default';
+settings.config.adapter = 'default';
 var Adapter = require(testAdapter);
 
 var options = {
@@ -23,7 +23,7 @@ var options = {
   },
   collection: 'sessionTable',
   connections: {
-    'connect-waterline': connection
+    'connect-waterline': settings.config
   }
 };
 
@@ -272,8 +272,7 @@ describe('connect-waterline', function(){
         
       });
       
-      describe('custom serializer', function(){
-        
+      describe('custom unserializer', function(){
         var store, waterline, collection;
         
         before(function(done){
@@ -299,6 +298,10 @@ describe('connect-waterline', function(){
         });
        
         it('should get session with custom unserializer', function (done) {
+          if(settings.alwaysStringify){
+            this.skip();
+          }
+        
           var sid = 'test_get_custom_unserializer-sid';
           var data = make_data();
           store.set(sid, data, function (err) {
@@ -564,6 +567,13 @@ function runTests(testType){
   
   
 function runNoStringifyTests(testType){
+  if(settings.alwaysStringify){
+    // Skip no stringify tests
+    it('should set session without stringify');
+    it('should set session cookie without stringify');
+    it('should set expires without stringify');
+    return;
+  }
 
   var store, waterline, collection;  
 

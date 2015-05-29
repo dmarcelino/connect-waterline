@@ -23,7 +23,7 @@
     "sails-postgresql": "^0.10.15"
   },
   "scripts": {
-    "test": "mocha test/unit"
+    "test": "make test"
   },
   "repository": {
     "type": "git",

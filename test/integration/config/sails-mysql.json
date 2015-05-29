@@ -9,5 +9,6 @@
     "connectionLimit": 10,
     "queueLimit": 0,
     "waitForConnections": true
-  }
+  },
+  "alwaysStringify": false
 }

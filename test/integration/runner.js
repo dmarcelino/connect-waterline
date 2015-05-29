@@ -2,9 +2,7 @@ var exec = require('child_process').exec;
 var async = require('async');
 
 // The adapters being tested
-//var adapters = ['sails-memory', 'sails-disk', 'sails-mongo', 'sails-postgresql'];//, 'sails-mysql', 'sails-redis'];
-var adapters = ['sails-orientdb'];
-//var adapters = ['sails-postgresql'];
+var adapters = ['sails-memory', 'sails-disk', 'sails-mongo', 'sails-postgresql', 'sails-mysql', 'sails-redis'];
 
 var exitCode = 0;
 console.time('total time elapsed');
@@ -28,7 +26,7 @@ async.eachSeries(adapters, function(adapterName, next){
     process.stdout.write(data);
   });
   child.on('close', function(code) {
-    console.log('exit code: ' + code);
+    console.log(adapterName + ', exit code: ' + code);
     exitCode = exitCode + code;
     next();
   });
@@ -39,5 +37,6 @@ function(err, res){
   if(err){
     console.error('Something wrong happened:', err);
   }
+  console.log('exit code: ' + exitCode);
   process.exit(exitCode);
 });
