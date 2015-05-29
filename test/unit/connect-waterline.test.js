@@ -96,7 +96,7 @@ var assert_session_equals = function (sid, data, session) {
   else {
     // Can't do a deepEqual for the whole session as we need the toJSON() version of the cookie
     // Make sure the session data in intact
-    for (var prop in session.session) {
+    for (var prop in data) {
       if (prop === 'cookie') {
         // Make sure the cookie is intact
         
