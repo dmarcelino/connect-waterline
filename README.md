@@ -21,7 +21,29 @@ npm i connect-waterline -S
 ## Usage
 Using connect-waterline with its own instance of waterline:
 ```javascript
+var session = require('express-session');
+var WaterlineStore = require(connect-waterline);
+var Adapter = require('sails-disk');  //any  sails-adapter
 
+var options = {
+  adapters: {
+    'default': Adapter
+  },
+  connections: {
+    'connect-waterline': {
+      // specific adapter connection options
+      // user: '',
+      // password: '',
+      // host: 'localhost',
+      // database: 'sessions'
+    }
+  }
+})
+
+app.use(session({
+  secret: 'foo',
+  store: new WaterlineStore(options);
+}));
 ```
 
 ## Testing
