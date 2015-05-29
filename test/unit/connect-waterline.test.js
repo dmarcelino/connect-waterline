@@ -226,18 +226,37 @@ describe('connect-waterline', function(){
         });
       });
       
-      it('should set session with custom serializer', function (done) {
-        var serializerOptions = _.defaults({
-          serialize: function (obj) {
-            obj.ice = 'test-1';
-            return JSON.stringify(obj);
-          },
-          sessionType: 'string'
-        }, options);
-        open_db(serializerOptions, function (store, db, collection) {
+      describe('custom serializer', function(){
+        
+        var store, waterline, collection;
+        
+        before(function(done){
+          var serializerOptions = _.defaults({
+            serialize: function (obj) {
+              obj.ice = 'test-1';
+              return JSON.stringify(obj);
+            },
+            sessionType: 'string'
+          }, options);
+          
+          function open_db_done (_store, _waterline, _collection) {
+            store = _store;
+            waterline = _waterline;
+            collection = _collection;
+            done();
+          }
+          
+          open_db(serializerOptions, open_db_done);
+        });
+        
+        after(function(done){
+          cleanup(store, waterline, collection, done);
+        });
+        
+        it('should set session with custom serializer', function (done) {
           var sid = 'test_set_custom_serializer-sid';
           var data = make_data(),
-            dataWithIce = JSON.parse(JSON.stringify(data));
+              dataWithIce = JSON.parse(JSON.stringify(data));
       
           dataWithIce.ice = 'test-1';
           store.set(sid, data, function (err) {
@@ -246,21 +265,40 @@ describe('connect-waterline', function(){
             collection.findOne({ sid: sid }, function (err, session) {
               assert.deepEqual(session.session, JSON.stringify(dataWithIce));
               assert.strictEqual(session.sid, sid);
-      
-              cleanup(store, db, collection, done);
+              done();
             });
           });
         });
+        
       });
+      
+      describe('custom serializer', function(){
+        
+        var store, waterline, collection;
+        
+        before(function(done){
+          var unserializerOptions = _.defaults({
+            unserialize: function (obj) {
+              obj.ice = 'test-2';
+              return obj;
+            },
+          }, options);
+          
+          function open_db_done (_store, _waterline, _collection) {
+            store = _store;
+            waterline = _waterline;
+            collection = _collection;
+            done();
+          }
+          
+          open_db(unserializerOptions, open_db_done);
+        });
+        
+        after(function(done){
+          cleanup(store, waterline, collection, done);
+        });
        
-      it('should get session with custom unserializer', function (done) {
-        var unserializerOptions = _.defaults({
-          unserialize: function (obj) {
-            obj.ice = 'test-2';
-            return obj;
-          },
-        }, options);
-        open_db(unserializerOptions, function (store, db, collection) {
+        it('should get session with custom unserializer', function (done) {
           var sid = 'test_get_custom_unserializer-sid';
           var data = make_data();
           store.set(sid, data, function (err) {
@@ -270,10 +308,11 @@ describe('connect-waterline', function(){
               data.cookie = data.cookie.toJSON();
               assert.equal(err, null);
               assert.deepEqual(session, data);
-              cleanup(store, db, collection, done);
+              done();
             });
           });
         });
+      
       });
        
       it('should touch session', function (done) {
