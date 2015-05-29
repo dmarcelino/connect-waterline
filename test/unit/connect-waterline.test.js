@@ -137,160 +137,225 @@ var cleanup = function (store, waterline, collection, callback) {
 
 describe('connect-waterline', function(){
 
-  it('should set session', function (done) {
-    open_db(options, function (store, waterline, collection) {
-      var sid = 'test_set-sid';
-      var data = make_data();
-  
-      store.set(sid, data, function (err) {
-        assert.equal(err, null);
-  
-        // Verify it was saved
-        collection.findOne({ sid: sid }, function (err, session) {
-          assert_session_equals(sid, data, session);
-  
-          cleanup(store, waterline, collection, done);
+  describe('creating new connection', function(done){
+    
+    describe('stringify', function(done){
+    
+      var store, waterline, collection;
+    
+      // tests setup
+      beforeEach(function(done){
+        open_db(options, function (_store, _waterline, _collection) {
+          store = _store;
+          waterline = _waterline;
+          collection = _collection;
+          done();
         });
       });
-    });
-  });
-  
-  it('should set session without stringify', function (done) {
-    open_db(_.defaults({ stringify: false }, options), function (store, db, collection) {
-      var sid = 'test_set-sid';
-      var data = make_data();
-  
-      store.set(sid, data, function (err) {
-        assert.equal(err, null);
-  
-        // Verify it was saved
-        collection.findOne({ sid: sid }, function (err, session) {
-          assert_session_equals(sid, data, session);
-  
-          cleanup(store, db, collection, done);
+      
+      afterEach(function(done){
+        cleanup(store, waterline, collection, function(){
+          store = undefined;
+          waterline = undefined;
+          collection = undefined;
+          done();
         });
       });
-    });
-  });
-   
-  it('should set session cookie without stringify', function (done) {
-    var origSession = make_data();
-    var cookie = origSession.cookie;
   
-    open_db(_.defaults({ stringify: false }, options), function (store, db, collection) {
-      var sid = 'test_set-sid';
-      store.set(sid, origSession, function (err) {
-        assert.equal(err, null);
-  
-        collection.findOne({ sid: sid }, function (err, session) {
-          // Make sure cookie came out intact
-          assert.strictEqual(origSession.cookie, cookie);
-  
-          // Make sure the fields made it back intact
-          assert.equal(new Date(cookie.expires).getTime(), new Date(session.session.cookie.expires).getTime());
-          assert.equal(cookie.secure, session.session.cookie.secure);
-  
-          cleanup(store, db, collection, function () {
-            done();
-          });
-        });
-      });
-    });
-  });
-   
-  it('should set expires', function (done) {
-    open_db(options, function (store, db, collection) {
-      var sid = 'test_set_expires-sid';
-      var data = make_data();
-  
-      store.set(sid, data, function (err) {
-        assert.equal(err, null);
-  
-        // Verify it was saved
-        collection.findOne({ sid: sid }, function (err, session) {
-          assert_session_equals(sid, data, session);
-  
-          cleanup(store, db, collection, function () {
-            done();
-          });
-        });
-      });
-    });
-  });
-  
-  it('should set expires without stringify', function (done) {
-    open_db(_.defaults({ stringify: false }, options), function (store, db, collection) {
-      var sid = 'test_set_expires-sid';
-      var data = make_data();
-  
-      store.set(sid, data, function (err) {
-        assert.equal(err, null);
-  
-        // Verify it was saved
-        collection.findOne({ sid: sid }, function (err, session) {
-          assert_session_equals(sid, data, session);
-  
-          cleanup(store, db, collection, function () {
-            done();
-          });
-        });
-      });
-    });
-  });
-  
-  it('should get session', function (done) {
-    open_db(options, function (store, db, collection) {
-      var sid = 'test_get-sid';
-      collection.create({ sid: sid, session: JSON.stringify({ key1: 1, key2: 'two' }) }, function (err, ses) {
-        assert.equal(err, null);
-        store.get(sid, function (err, session) {
+      it('should set session', function (done) {
+        var sid = 'test_set-sid';
+        var data = make_data();
+    
+        store.set(sid, data, function (err) {
           assert.equal(err, null);
-          assert.deepEqual(session, { key1: 1, key2: 'two' });
-          cleanup(store, db, collection, function () {
+    
+          // Verify it was saved
+          collection.findOne({ sid: sid }, function (err, session) {
+            assert_session_equals(sid, data, session);
             done();
           });
         });
       });
-    });
-  });
-   
-  it('should store length', function (done) {
-    open_db(options, function (store, db, collection) {
-      var sid = 'test_length-sid';
-      collection.create({ sid: sid, session: JSON.stringify({ key1: 1, key2: 'two' }) }, function () {
-        store.length(function (err, length) {
+      
+      it('should set expires', function (done) {
+        var sid = 'test_set_expires-sid';
+        var data = make_data();
+    
+        store.set(sid, data, function (err) {
           assert.equal(err, null);
-          assert.strictEqual(length, 1);
-          cleanup(store, db, collection, function () {
+    
+          // Verify it was saved
+          collection.findOne({ sid: sid }, function (err, session) {
+            assert_session_equals(sid, data, session);
+    
             done();
           });
         });
       });
-    });
-  });
-  
-  it('should destroy session', function (done) {
-    open_db(options, function (store, db, collection) {
-      var sid = 'test_destroy_ok-sid';
-      collection.create({ _id: sid, session: JSON.stringify({ key1: 1, key2: 'two' }) }, function () {
-        store.destroy(sid, function (err) {
+      
+      it('should get session', function (done) {
+        var sid = 'test_get-sid';
+        collection.create({ sid: sid, session: JSON.stringify({ key1: 1, key2: 'two' }) }, function (err, ses) {
           assert.equal(err, null);
-          cleanup(store, db, collection, function () {
+          store.get(sid, function (err, session) {
+            assert.equal(err, null);
+            assert.deepEqual(session, { key1: 1, key2: 'two' });
+            done();
+          });
+        });
+      });
+     
+      it('should store length', function (done) {
+        var sid = 'test_length-sid';
+        collection.create({ sid: sid, session: JSON.stringify({ key1: 1, key2: 'two' }) }, function () {
+          store.length(function (err, length) {
+            assert.equal(err, null);
+            assert.strictEqual(length, 1);
+            done();
+          });
+        });
+      });
+    
+      it('should destroy session', function (done) {
+        var sid = 'test_destroy_ok-sid';
+        collection.create({ _id: sid, session: JSON.stringify({ key1: 1, key2: 'two' }) }, function () {
+          store.destroy(sid, function (err) {
+            assert.equal(err, null);
+            done();
+          });
+        });
+      });
+    
+      it('should clear store', function (done) {
+        var sid = 'test_length-sid';
+        collection.create({ _id: sid, key1: 1, key2: 'two' }, function () {
+          store.clear(function () {
+            collection.count(function (err, count) {
+              assert.strictEqual(count, 0);
+              done();
+            });
+          });
+        });
+      });
+      
+    });
+    
+    describe('no stringify', function(done){
+    
+      var store, waterline, collection;
+      var noStringifyOptions = _.defaults({ stringify: false }, options)
+    
+      // tests setup
+      beforeEach(function(done){
+        open_db(noStringifyOptions, function (_store, _waterline, _collection) {
+          store = _store;
+          waterline = _waterline;
+          collection = _collection;
+          done();
+        });
+      });
+      
+      afterEach(function(done){
+        cleanup(store, waterline, collection, function(){
+          store = undefined;
+          waterline = undefined;
+          collection = undefined;
+          done();
+        });
+      });
+    
+    it('should set session without stringify', function (done) {
+        var sid = 'test_set-sid';
+        var data = make_data();
+    
+        store.set(sid, data, function (err) {
+          assert.equal(err, null);
+    
+          // Verify it was saved
+          collection.findOne({ sid: sid }, function (err, session) {
+            assert_session_equals(sid, data, session);
+            done();
+          });
+        });
+      });
+     
+      it('should set session cookie without stringify', function (done) {
+        var origSession = make_data();
+        var cookie = origSession.cookie;
+        var sid = 'test_set-sid';
+        store.set(sid, origSession, function (err) {
+          assert.equal(err, null);
+    
+          collection.findOne({ sid: sid }, function (err, session) {
+            // Make sure cookie came out intact
+            assert.strictEqual(origSession.cookie, cookie);
+    
+            // Make sure the fields made it back intact
+            assert.equal(new Date(cookie.expires).getTime(), new Date(session.session.cookie.expires).getTime());
+            assert.equal(cookie.secure, session.session.cookie.secure);
+            done();
+          });
+        });
+      });
+    
+      it('should set expires without stringify', function (done) {
+        var sid = 'test_set_expires-sid';
+        var data = make_data();
+    
+        store.set(sid, data, function (err) {
+          assert.equal(err, null);
+    
+          // Verify it was saved
+          collection.findOne({ sid: sid }, function (err, session) {
+            assert_session_equals(sid, data, session);
             done();
           });
         });
       });
     });
-  });
-  
-  it('should clear store', function (done) {
-    open_db(options, function (store, db, collection) {
-      var sid = 'test_length-sid';
-      collection.create({ _id: sid, key1: 1, key2: 'two' }, function () {
-        store.clear(function () {
-          collection.count(function (err, count) {
-            assert.strictEqual(count, 0);
-  
+    
+    
+    
+    it('should throw error with empty options', function (done) {
+      assert.throws(
+        function () {
+          new MongoStore({});
+        },
+        Error);
+    
+      done();
+    }); 
+     
+    it('should set session with default expiration', function (done) {
+      var defaultExpirationTime = 10101;  // defaultExpirationTime is deprecated, so we use ttl
+      var ttl = defaultExpirationTime / 1000;
+      var optionsWithExpirationTime = _.defaults({ ttl: ttl }, options);
+    
+      open_db(optionsWithExpirationTime, function (store, db, collection) {
+        var sid = 'test_set_expires-sid';
+        var data = make_data_no_cookie();
+    
+        var timeBeforeSet = new Date().valueOf();
+    
+        store.set(sid, data, function (err) {
+          assert.equal(err, null);
+    
+          // Verify it was saved
+          collection.findOne({ sid: sid }, function (err, session) {
+            assert.deepEqual(session.session, JSON.stringify(data));
+            assert.strictEqual(session.sid, sid);
+            assert.notEqual(session.expires, null);
+    
+            var timeAfterSet = new Date().valueOf();
+    
+            // +1000 because sails-postgresql only has 1s granularity
+            assert.ok(timeBeforeSet + defaultExpirationTime <= (session.expires.valueOf() + 1000),
+             (timeBeforeSet + defaultExpirationTime) + ' <= ' + session.expires.valueOf() +  ', diff: ' +
+             (session.expires.valueOf() - (timeBeforeSet + defaultExpirationTime)) + ' ms');
+            assert.ok(session.expires.valueOf() <= timeAfterSet + defaultExpirationTime,
+              session.expires.valueOf() + ' <= ' + (timeAfterSet + defaultExpirationTime) + ', diff: ' +
+              (timeAfterSet + defaultExpirationTime - session.expires.valueOf()) + ' ms');
+    
             cleanup(store, db, collection, function () {
               done();
             });
@@ -298,18 +363,209 @@ describe('connect-waterline', function(){
         });
       });
     });
+     
+    it('should set session without default expiration', function (done) {
+      var defaultExpirationTime = 1000 * 60 * 60 * 24 * 14;
+      open_db(options, function (store, db, collection) {
+        var sid = 'test_set_expires-sid';
+        var data = make_data_no_cookie();
+    
+        var timeBeforeSet = new Date().valueOf();
+    
+        store.set(sid, data, function (err) {
+          assert.equal(err, null);
+    
+          // Verify it was saved
+          collection.findOne({ sid: sid }, function (err, session) {
+            assert.deepEqual(session.session, JSON.stringify(data));
+            assert.strictEqual(session.sid, sid);
+            assert.notEqual(session.expires, null);
+    
+            var timeAfterSet = new Date().valueOf();
+    
+            assert.ok(timeBeforeSet + defaultExpirationTime <= session.expires.valueOf() + 1000);
+            assert.ok(session.expires.valueOf() <= timeAfterSet + defaultExpirationTime);
+    
+            cleanup(store, db, collection, function () {
+              done();
+            });
+          });
+        });
+      });
+    });
+    
+    it('should set session with custom serializer', function (done) {
+      var serializerOptions = _.defaults({
+        serialize: function (obj) {
+          obj.ice = 'test-1';
+          return JSON.stringify(obj);
+        },
+        sessionType: 'string'
+      }, options);
+      open_db(serializerOptions, function (store, db, collection) {
+        var sid = 'test_set_custom_serializer-sid';
+        var data = make_data(),
+          dataWithIce = JSON.parse(JSON.stringify(data));
+    
+        dataWithIce.ice = 'test-1';
+        store.set(sid, data, function (err) {
+          assert.equal(err, null);
+    
+          collection.findOne({ sid: sid }, function (err, session) {
+            assert.deepEqual(session.session, JSON.stringify(dataWithIce));
+            assert.strictEqual(session.sid, sid);
+    
+            cleanup(store, db, collection, done);
+          });
+        });
+      });
+    });
+     
+    it('should get session with custom unserializer', function (done) {
+      var unserializerOptions = _.defaults({
+        unserialize: function (obj) {
+          obj.ice = 'test-2';
+          return obj;
+        },
+      }, options);
+      open_db(unserializerOptions, function (store, db, collection) {
+        var sid = 'test_get_custom_unserializer-sid';
+        var data = make_data();
+        store.set(sid, data, function (err) {
+          assert.equal(err, null);
+          store.get(sid, function (err, session) {
+            data.ice = 'test-2';
+            data.cookie = data.cookie.toJSON();
+            assert.equal(err, null);
+            assert.deepEqual(session, data);
+            cleanup(store, db, collection, done);
+          });
+        });
+      });
+    });
+     
+    it('should touch session', function (done) {
+      open_db(options, function (store, db, collection) {
+    
+        var sid = 'test_touch-sid',
+          data = make_data();
+    
+        store.set(sid, data, function (err) {
+          assert.equal(err, null);
+    
+          // Verify it was saved
+          collection.findOne({ sid: sid }, function (err, session) {
+            assert.equal(err, null);
+            assert_session_equals(sid, data, session);
+    
+            // touch the session
+            store.touch(sid, session.session, function (err) {
+              assert.equal(err, null);
+              
+              // find the touched session
+              collection.findOne({ sid: sid }, function (err, session2) {
+                assert.equal(err, null);
+    
+                // check if both expiry date are different
+                assert.ok(session2.expires.getTime() > session.expires.getTime());
+    
+                cleanup(store, db, collection, function () {
+                  done();
+                });
+    
+              });
+            });
+          });
+        });
+      });
+    });
+     
+    it('should lazy touch session sync', function (done) {
+      open_db(lazyOptions, function (store, db, collection) {
+    
+        var sid = 'test_lazy_touch-sid-sync',
+          data = make_data(),
+          lastModifiedBeforeTouch,
+          lastModifiedAfterTouch;
+    
+        store.set(sid, data, function (err) {
+          assert.equal(err, null);
+    
+          // Verify it was saved
+          collection.findOne({ sid: sid }, function (err, session) {
+            assert.equal(err, null);
+    
+            lastModifiedBeforeTouch = session.lastModified.getTime();
+    
+            // touch the session
+            store.touch(sid, session, function (err) {
+              assert.equal(err, null);
+    
+              collection.findOne({ sid: sid }, function (err, session2) {
+                assert.equal(err, null);
+    
+                lastModifiedAfterTouch = session2.lastModified.getTime();
+    
+                assert.strictEqual(lastModifiedBeforeTouch, lastModifiedAfterTouch);
+    
+                cleanup(store, db, collection, function () {
+                  done();
+                });
+    
+              });
+            });
+          });
+        });
+      });
+    });
+    
+    
+    it('should lazy touch session async', function (done) {
+      this.timeout(4000);
+      open_db(lazyOptions, function (store, db, collection) {
+    
+        var sid = 'test_lazy_touch-sid',
+          data = make_data(),
+          lastModifiedBeforeTouch,
+          lastModifiedAfterTouch;
+    
+        store.set(sid, data, function (err) {
+          assert.equal(err, null);
+    
+          // Verify it was saved
+          collection.findOne({ sid: sid }, function (err, session) {
+            assert.equal(err, null);
+    
+            lastModifiedBeforeTouch = session.lastModified.getTime();
+    
+            setTimeout(function () {
+              
+              // touch the session
+              store.touch(sid, session, function (err) {
+                assert.equal(err, null);
+    
+                collection.findOne({ sid: sid }, function (err, session2) {
+                  assert.equal(err, null);
+    
+                  lastModifiedAfterTouch = session2.lastModified.getTime();
+    
+                  assert.ok(lastModifiedAfterTouch > lastModifiedBeforeTouch);
+    
+                  cleanup(store, db, collection, function () {
+                    done();
+                  });
+    
+                });
+              });
+    
+            }, 3000);
+    
+          });
+        });
+      });
+    });
+  
   });
-  
-  it('should throw error with empty options', function (done) {
-    assert.throws(
-      function () {
-        new MongoStore({});
-      },
-      Error);
-  
-    done();
-  });
-  
   
   describe('previously instantiated model', function(){
     
@@ -478,245 +734,6 @@ describe('connect-waterline', function(){
               });
             });
           });
-        });
-      });
-    });
-  }); 
-   
-  it('should set session with default expiration', function (done) {
-    var defaultExpirationTime = 10101;  // defaultExpirationTime is deprecated, so we use ttl
-    var ttl = defaultExpirationTime / 1000;
-    var optionsWithExpirationTime = _.defaults({ ttl: ttl }, options);
-  
-    open_db(optionsWithExpirationTime, function (store, db, collection) {
-      var sid = 'test_set_expires-sid';
-      var data = make_data_no_cookie();
-  
-      var timeBeforeSet = new Date().valueOf();
-  
-      store.set(sid, data, function (err) {
-        assert.equal(err, null);
-  
-        // Verify it was saved
-        collection.findOne({ sid: sid }, function (err, session) {
-          assert.deepEqual(session.session, JSON.stringify(data));
-          assert.strictEqual(session.sid, sid);
-          assert.notEqual(session.expires, null);
-  
-          var timeAfterSet = new Date().valueOf();
-  
-          // +1000 because sails-postgresql only has 1s granularity
-          assert.ok(timeBeforeSet + defaultExpirationTime <= (session.expires.valueOf() + 1000),
-           (timeBeforeSet + defaultExpirationTime) + ' <= ' + session.expires.valueOf() +  ', diff: ' +
-           (session.expires.valueOf() - (timeBeforeSet + defaultExpirationTime)) + ' ms');
-          assert.ok(session.expires.valueOf() <= timeAfterSet + defaultExpirationTime,
-            session.expires.valueOf() + ' <= ' + (timeAfterSet + defaultExpirationTime) + ', diff: ' +
-            (timeAfterSet + defaultExpirationTime - session.expires.valueOf()) + ' ms');
-  
-          cleanup(store, db, collection, function () {
-            done();
-          });
-        });
-      });
-    });
-  });
-   
-  it('should set session without default expiration', function (done) {
-    var defaultExpirationTime = 1000 * 60 * 60 * 24 * 14;
-    open_db(options, function (store, db, collection) {
-      var sid = 'test_set_expires-sid';
-      var data = make_data_no_cookie();
-  
-      var timeBeforeSet = new Date().valueOf();
-  
-      store.set(sid, data, function (err) {
-        assert.equal(err, null);
-  
-        // Verify it was saved
-        collection.findOne({ sid: sid }, function (err, session) {
-          assert.deepEqual(session.session, JSON.stringify(data));
-          assert.strictEqual(session.sid, sid);
-          assert.notEqual(session.expires, null);
-  
-          var timeAfterSet = new Date().valueOf();
-  
-          assert.ok(timeBeforeSet + defaultExpirationTime <= session.expires.valueOf() + 1000);
-          assert.ok(session.expires.valueOf() <= timeAfterSet + defaultExpirationTime);
-  
-          cleanup(store, db, collection, function () {
-            done();
-          });
-        });
-      });
-    });
-  });
-  
-  it('should set session with custom serializer', function (done) {
-    var serializerOptions = _.defaults({
-      serialize: function (obj) {
-        obj.ice = 'test-1';
-        return JSON.stringify(obj);
-      },
-      sessionType: 'string'
-    }, options);
-    open_db(serializerOptions, function (store, db, collection) {
-      var sid = 'test_set_custom_serializer-sid';
-      var data = make_data(),
-        dataWithIce = JSON.parse(JSON.stringify(data));
-  
-      dataWithIce.ice = 'test-1';
-      store.set(sid, data, function (err) {
-        assert.equal(err, null);
-  
-        collection.findOne({ sid: sid }, function (err, session) {
-          assert.deepEqual(session.session, JSON.stringify(dataWithIce));
-          assert.strictEqual(session.sid, sid);
-  
-          cleanup(store, db, collection, done);
-        });
-      });
-    });
-  });
-   
-  it('should get session with custom unserializer', function (done) {
-    var unserializerOptions = _.defaults({
-      unserialize: function (obj) {
-        obj.ice = 'test-2';
-        return obj;
-      },
-    }, options);
-    open_db(unserializerOptions, function (store, db, collection) {
-      var sid = 'test_get_custom_unserializer-sid';
-      var data = make_data();
-      store.set(sid, data, function (err) {
-        assert.equal(err, null);
-        store.get(sid, function (err, session) {
-          data.ice = 'test-2';
-          data.cookie = data.cookie.toJSON();
-          assert.equal(err, null);
-          assert.deepEqual(session, data);
-          cleanup(store, db, collection, done);
-        });
-      });
-    });
-  });
-   
-  it('should touch session', function (done) {
-    open_db(options, function (store, db, collection) {
-  
-      var sid = 'test_touch-sid',
-        data = make_data();
-  
-      store.set(sid, data, function (err) {
-        assert.equal(err, null);
-  
-        // Verify it was saved
-        collection.findOne({ sid: sid }, function (err, session) {
-          assert.equal(err, null);
-          assert_session_equals(sid, data, session);
-  
-          // touch the session
-          store.touch(sid, session.session, function (err) {
-            assert.equal(err, null);
-            
-            // find the touched session
-            collection.findOne({ sid: sid }, function (err, session2) {
-              assert.equal(err, null);
-  
-              // check if both expiry date are different
-              assert.ok(session2.expires.getTime() > session.expires.getTime());
-  
-              cleanup(store, db, collection, function () {
-                done();
-              });
-  
-            });
-          });
-        });
-      });
-    });
-  });
-   
-  it('should lazy touch session sync', function (done) {
-    open_db(lazyOptions, function (store, db, collection) {
-  
-      var sid = 'test_lazy_touch-sid-sync',
-        data = make_data(),
-        lastModifiedBeforeTouch,
-        lastModifiedAfterTouch;
-  
-      store.set(sid, data, function (err) {
-        assert.equal(err, null);
-  
-        // Verify it was saved
-        collection.findOne({ sid: sid }, function (err, session) {
-          assert.equal(err, null);
-  
-          lastModifiedBeforeTouch = session.lastModified.getTime();
-  
-          // touch the session
-          store.touch(sid, session, function (err) {
-            assert.equal(err, null);
-  
-            collection.findOne({ sid: sid }, function (err, session2) {
-              assert.equal(err, null);
-  
-              lastModifiedAfterTouch = session2.lastModified.getTime();
-  
-              assert.strictEqual(lastModifiedBeforeTouch, lastModifiedAfterTouch);
-  
-              cleanup(store, db, collection, function () {
-                done();
-              });
-  
-            });
-          });
-        });
-      });
-    });
-  });
-  
-  
-  it('should lazy touch session async', function (done) {
-    this.timeout(4000);
-    open_db(lazyOptions, function (store, db, collection) {
-  
-      var sid = 'test_lazy_touch-sid',
-        data = make_data(),
-        lastModifiedBeforeTouch,
-        lastModifiedAfterTouch;
-  
-      store.set(sid, data, function (err) {
-        assert.equal(err, null);
-  
-        // Verify it was saved
-        collection.findOne({ sid: sid }, function (err, session) {
-          assert.equal(err, null);
-  
-          lastModifiedBeforeTouch = session.lastModified.getTime();
-  
-          setTimeout(function () {
-            
-            // touch the session
-            store.touch(sid, session, function (err) {
-              assert.equal(err, null);
-  
-              collection.findOne({ sid: sid }, function (err, session2) {
-                assert.equal(err, null);
-  
-                lastModifiedAfterTouch = session2.lastModified.getTime();
-  
-                assert.ok(lastModifiedAfterTouch > lastModifiedBeforeTouch);
-  
-                cleanup(store, db, collection, function () {
-                  done();
-                });
-  
-              });
-            });
-  
-          }, 3000);
-  
         });
       });
     });
