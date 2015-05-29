@@ -10,5 +10,5 @@
     "queueLimit": 0,
     "waitForConnections": true
   },
-  "alwaysStringify": false
+  "skipUnserializer": true
 }

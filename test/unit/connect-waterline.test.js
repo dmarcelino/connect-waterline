@@ -298,7 +298,7 @@ describe('connect-waterline', function(){
         });
        
         it('should get session with custom unserializer', function (done) {
-          if(settings.alwaysStringify){
+          if(settings.skipUnserializer){
             this.skip();
           }
         
