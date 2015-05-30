@@ -148,7 +148,6 @@ describe('connect-waterline', function(){
     
     describe('stringify', function(done){
       runTests('new_connection');
-      //runTests('instantiated_model');
     });
     
     describe('no stringify', function(done){
@@ -450,11 +449,66 @@ describe('connect-waterline', function(){
   
   describe('previously instantiated model', function(){
     
-    describe('stringify', function(done){
+    describe('auto remove interval', function(){
+      this.timeout(4000);
+      
+      var store, waterline, collection;
+      
+      before(function(done){
+        function open_db_done (_store, _waterline, _collection) {
+          store = _store;
+          waterline = _waterline;
+          collection = _collection;
+          done();
+        }
+        
+        getWaterlineModel(function (err, model) {
+          assert.equal(err, null);
+          assert(model, 'model must exist');
+          var autoRemoveOptions = _.defaults({ autoRemoveInterval: 0.5/60 /*min*/ }, { model: model });
+          
+          var sessions = [
+            { sid: 'test_remove-interval-1', session: JSON.stringify({ key1: 1, key2: 'two' }) },
+            { sid: 'test_remove-interval-2', session: JSON.stringify({ key1: 1, key2: 'two' }), expires: new Date() },
+            { sid: 'test_remove-interval-3', session: JSON.stringify({ key1: 1, key2: 'two' }), expires: new Date(new Date().valueOf() + 60*60*1000) }
+          ];
+          
+          // save a few sessions
+          model.create(sessions, function (err, ses) {
+            assert(!err, err);
+            assert.equal(ses.length, 3);
+            open_db(autoRemoveOptions, open_db_done);
+          });
+        });
+      });
+      
+      after(function(done){
+        collection.destroy({ sid: { startsWith: 'test_remove-interval' }}, function(){
+          cleanup(store, waterline, collection, done);
+        });
+      });
+      
+      it('should remove expired sessions and keep the others', function(done){
+        // let's wait a bit and then check if sessions were correctly cleaned
+        setTimeout(function(){
+          collection.find({ sid: { startsWith: 'test_remove-interval' }, sort: 'sid ASC' }, function(err, sessions){
+            assert.equal(err, null);
+            assert.equal(sessions.length, 2);
+            assert.equal(sessions[0].sid, 'test_remove-interval-1');
+            assert.equal(sessions[1].sid, 'test_remove-interval-3');
+            done();
+          });
+        }, 0.6 * 1000);
+      });
+      
+      
+    });
+    
+    describe('stringify', function(){
       runTests('instantiated_model');
     });
      
-    describe('no stringify', function(done){
+    describe('no stringify', function(){
       runNoStringifyTests('instantiated_model');
     });
 
@@ -551,7 +605,7 @@ function runTests(testType){
 
   it('should destroy session', function (done) {
     var sid = 'test_destroy_ok-sid';
-    collection.create({ _id: sid, session: JSON.stringify({ key1: 1, key2: 'two' }) }, function () {
+    collection.create({ sid: sid, session: JSON.stringify({ key1: 1, key2: 'two' }) }, function () {
       store.destroy(sid, function (err) {
         assert.equal(err, null);
         done();
@@ -561,7 +615,7 @@ function runTests(testType){
 
   it('should clear store', function (done) {
     var sid = 'test_length-sid';
-    collection.create({ _id: sid, key1: 1, key2: 'two' }, function () {
+    collection.create({ sid: sid, key1: 1, key2: 'two' }, function () {
       store.clear(function () {
         collection.count(function (err, count) {
           assert.strictEqual(count, 0);

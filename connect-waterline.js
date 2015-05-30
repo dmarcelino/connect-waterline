@@ -17,7 +17,7 @@ var defaultOptions = {
   hash: false,
   ttl: 60 * 60 * 24 * 14, // 14 days
   autoRemove: 'interval',
-  autoRemoveInterval: 10
+  autoRemoveInterval: 10  // min
 };
 
 var defaultHashOptions = {
@@ -118,7 +118,7 @@ module.exports = function(connect) {
 
         case 'interval':
           setInterval(function () {
-            self.collection.destroy({ expires: { '>': new Date() } }, function(err){
+            self.collection.destroy({ expires: { '<': new Date() } }, function(err){
               if(err) { log.warn('Failed to delete expired sesssions:', err); }
             });
           }, options.autoRemoveInterval * 1000 * 60);
