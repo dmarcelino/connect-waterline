@@ -1,6 +1,7 @@
 /**
  * Module dependencies.
  */
+it.optional = require('it-optional'); 
 var session = require('express-session');
 var ConnectWaterline = require('../../connect-waterline');
 var WaterlineStore = ConnectWaterline(session);
@@ -253,7 +254,7 @@ describe('connect-waterline', function(){
           cleanup(store, waterline, collection, done);
         });
         
-        it('should set session with custom serializer', function (done) {
+        it.optional('should set session with custom serializer', function (done) {
           var sid = 'test_set_custom_serializer-sid';
           var data = make_data(),
               dataWithIce = JSON.parse(JSON.stringify(data));
@@ -297,7 +298,7 @@ describe('connect-waterline', function(){
           cleanup(store, waterline, collection, done);
         });
        
-        it('should get session with custom unserializer', function (done) {
+        it.optional('should get session with custom unserializer', function (done) {
           if(settings.skipUnserializer){
             this.skip();
           }
@@ -608,7 +609,7 @@ function runNoStringifyTests(testType){
     });
   });
 
-  it('should set session without stringify', function (done) {
+  it.optional('should set session without stringify', function (done) {
     var sid = 'test_set-sid';
     var data = make_data();
 
@@ -623,7 +624,7 @@ function runNoStringifyTests(testType){
     });
   });
  
-  it('should set session cookie without stringify', function (done) {
+  it.optional('should set session cookie without stringify', function (done) {
     var origSession = make_data();
     var cookie = origSession.cookie;
     var sid = 'test_set-sid';
@@ -642,7 +643,7 @@ function runNoStringifyTests(testType){
     });
   });
 
-  it('should set expires without stringify', function (done) {
+  it.optional('should set expires without stringify', function (done) {
     var sid = 'test_set_expires-sid';
     var data = make_data();
 
