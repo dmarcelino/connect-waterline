@@ -8,6 +8,5 @@
     "schema": true,
     "ssl": false
   },
-  "alwaysStringify": true,
   "skipUnserializer": true
 }
