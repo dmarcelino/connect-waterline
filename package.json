@@ -1,6 +1,6 @@
 {
   "name": "connect-waterline",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Waterline session store for Express and Connect",
   "main": "connect-waterline.js",
   "directories": {
@@ -15,7 +15,7 @@
   "devDependencies": {
     "async": "^1.0.0",
     "express-session": "^1.11.2",
-    "it-optional": "^0.0.4",
+    "it-optional": "^0.0.5",
     "mocha": "*",
     "sails-disk": "^0.10.8",
     "sails-memory": "^0.10.4",
