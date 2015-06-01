@@ -27,10 +27,7 @@ async.eachSeries(adapters, function(adapterName, next){
   });
   child.on('close', function(code) {
     console.log(adapterName + ', exit code: ' + code);
-    if(adapterName !== 'sails-redis'){
-      // ignore sails-redis result for now
-      exitCode = exitCode + code;
-    }
+    exitCode = exitCode + code;
     next();
   });
 },
