@@ -351,97 +351,110 @@ describe('connect-waterline', function(){
       });
     
     });
-     
-    it('should touch session', function (done) {
-      open_db(options, function (store, db, collection) {
     
+    describe('touch', function(){
+      
+      var testVars = {};
+
+      before(function(done){
+        open_db(options, testVars, done);
+      });
+      
+      after(function(done){
+        cleanup(testVars, done);
+      });
+      
+      it('should touch session', function (done) {
         var sid = 'test_touch-sid',
-          data = make_data();
+            data = make_data();
     
-        store.set(sid, data, function (err) {
+        testVars.store.set(sid, data, function (err) {
           assert.equal(err, null);
     
           // Verify it was saved
-          collection.findOne({ sid: sid }, function (err, session) {
+          testVars.collection.findOne({ sid: sid }, function (err, session) {
             assert.equal(err, null);
             assert_session_equals(sid, data, session);
     
             // touch the session
-            store.touch(sid, session.session, function (err) {
+            testVars.store.touch(sid, session.session, function (err) {
               assert.equal(err, null);
               
               // find the touched session
-              collection.findOne({ sid: sid }, function (err, session2) {
+              testVars.collection.findOne({ sid: sid }, function (err, session2) {
                 assert.equal(err, null);
     
                 // check if both expiry date are different
                 assert.ok(session2.expires.getTime() > session.expires.getTime());
-    
-                cleanup(store, db, collection, function () {
-                  done();
-                });
-    
+                done();
               });
             });
           });
         });
       });
     });
-     
-    it('should lazy touch session sync', function (done) {
-      open_db(lazyOptions, function (store, db, collection) {
     
+    describe('lazy touch', function(){
+      
+      var testVars;
+
+      beforeEach(function(done){
+        testVars = {};
+        open_db(lazyOptions, testVars, done);
+      });
+      
+      afterEach(function(done){
+        cleanup(testVars, done);
+      });
+     
+      it('should lazy touch session sync', function (done) {
+      
         var sid = 'test_lazy_touch-sid-sync',
           data = make_data(),
           lastModifiedBeforeTouch,
           lastModifiedAfterTouch;
     
-        store.set(sid, data, function (err) {
+        testVars.store.set(sid, data, function (err) {
           assert.equal(err, null);
     
           // Verify it was saved
-          collection.findOne({ sid: sid }, function (err, session) {
+          testVars.collection.findOne({ sid: sid }, function (err, session) {
             assert.equal(err, null);
     
             lastModifiedBeforeTouch = session.lastModified.getTime();
     
             // touch the session
-            store.touch(sid, session, function (err) {
+            testVars.store.touch(sid, session, function (err) {
               assert.equal(err, null);
     
-              collection.findOne({ sid: sid }, function (err, session2) {
+              testVars.collection.findOne({ sid: sid }, function (err, session2) {
                 assert.equal(err, null);
     
                 lastModifiedAfterTouch = session2.lastModified.getTime();
     
                 assert.strictEqual(lastModifiedBeforeTouch, lastModifiedAfterTouch);
     
-                cleanup(store, db, collection, function () {
-                  done();
-                });
-    
+                done();
               });
             });
           });
         });
       });
-    });
-    
-    
-    it('should lazy touch session async', function (done) {
-      this.timeout(4000);
-      open_db(lazyOptions, function (store, db, collection) {
-    
+      
+      
+      it('should lazy touch session async', function (done) {
+        this.timeout(4000);
+      
         var sid = 'test_lazy_touch-sid',
           data = make_data(),
           lastModifiedBeforeTouch,
           lastModifiedAfterTouch;
     
-        store.set(sid, data, function (err) {
+        testVars.store.set(sid, data, function (err) {
           assert.equal(err, null);
     
           // Verify it was saved
-          collection.findOne({ sid: sid }, function (err, session) {
+          testVars.collection.findOne({ sid: sid }, function (err, session) {
             assert.equal(err, null);
     
             lastModifiedBeforeTouch = session.lastModified.getTime();
@@ -449,19 +462,16 @@ describe('connect-waterline', function(){
             setTimeout(function () {
               
               // touch the session
-              store.touch(sid, session, function (err) {
+              testVars.store.touch(sid, session, function (err) {
                 assert.equal(err, null);
     
-                collection.findOne({ sid: sid }, function (err, session2) {
+                testVars.collection.findOne({ sid: sid }, function (err, session2) {
                   assert.equal(err, null);
     
                   lastModifiedAfterTouch = session2.lastModified.getTime();
     
                   assert.ok(lastModifiedAfterTouch > lastModifiedBeforeTouch);
-    
-                  cleanup(store, db, collection, function () {
-                    done();
-                  });
+                  done();
     
                 });
               });
