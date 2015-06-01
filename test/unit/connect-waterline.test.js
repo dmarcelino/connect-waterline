@@ -182,23 +182,34 @@ describe('connect-waterline', function(){
     describe('no stringify', function(done){
       runNoStringifyTests('new_connection');
     });
-     
-    it('should set session with default expiration', function (done) {
-      var defaultExpirationTime = 10101;  // defaultExpirationTime is deprecated, so we use ttl
-      var ttl = defaultExpirationTime / 1000;
-      var optionsWithExpirationTime = _.defaults({ ttl: ttl }, options);
     
-      open_db(optionsWithExpirationTime, function (store, db, collection) {
+    describe('default expiration', function(done){
+      
+      var testVars = {};
+      var defaultExpirationTime = 10101;  // defaultExpirationTime is deprecated, so we use ttl
+      
+      before(function(done){
+        var ttl = defaultExpirationTime / 1000;
+        var optionsWithExpirationTime = _.defaults({ ttl: ttl }, options);
+        
+        open_db(optionsWithExpirationTime, testVars, done);
+      });
+      
+      after(function(done){
+        cleanup(testVars, done);
+      });
+      
+      it('should set session with default expiration', function (done) {
         var sid = 'test_set_expires-sid';
         var data = make_data_no_cookie();
     
         var timeBeforeSet = new Date().valueOf();
     
-        store.set(sid, data, function (err) {
+        testVars.store.set(sid, data, function (err) {
           assert.equal(err, null);
     
           // Verify it was saved
-          collection.findOne({ sid: sid }, function (err, session) {
+          testVars.collection.findOne({ sid: sid }, function (err, session) {
             assert.deepEqual(session.session, JSON.stringify(data));
             assert.strictEqual(session.sid, sid);
             assert.notEqual(session.expires, null);
@@ -213,27 +224,36 @@ describe('connect-waterline', function(){
               session.expires.valueOf() + ' <= ' + (timeAfterSet + defaultExpirationTime) + ', diff: ' +
               (timeAfterSet + defaultExpirationTime - session.expires.valueOf()) + ' ms');
     
-            cleanup(store, db, collection, function () {
-              done();
-            });
+            done();
           });
         });
       });
     });
-     
-    it('should set session without default expiration', function (done) {
-      var defaultExpirationTime = 1000 * 60 * 60 * 24 * 14;
-      open_db(options, function (store, db, collection) {
+      
+    describe('without default expiration', function(done){
+       
+      var testVars = {};
+      
+      before(function(done){
+        open_db(options, testVars, done);
+      });
+      
+      after(function(done){
+        cleanup(testVars, done);
+      });
+       
+      it('should set session without default expiration', function (done) {
+        var defaultExpirationTime = 1000 * 60 * 60 * 24 * 14;
         var sid = 'test_set_expires-sid';
         var data = make_data_no_cookie();
     
         var timeBeforeSet = new Date().valueOf();
     
-        store.set(sid, data, function (err) {
+        testVars.store.set(sid, data, function (err) {
           assert.equal(err, null);
     
           // Verify it was saved
-          collection.findOne({ sid: sid }, function (err, session) {
+          testVars.collection.findOne({ sid: sid }, function (err, session) {
             assert.deepEqual(session.session, JSON.stringify(data));
             assert.strictEqual(session.sid, sid);
             assert.notEqual(session.expires, null);
@@ -243,12 +263,11 @@ describe('connect-waterline', function(){
             assert.ok(timeBeforeSet + defaultExpirationTime <= session.expires.valueOf() + 1000);
             assert.ok(session.expires.valueOf() <= timeAfterSet + defaultExpirationTime);
     
-            cleanup(store, db, collection, function () {
-              done();
-            });
+            done();
           });
         });
       });
+      
     });
     
     describe('custom serializer', function(){
