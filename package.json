@@ -1,6 +1,6 @@
 {
   "name": "connect-waterline",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Waterline session store for Express and Connect",
   "main": "connect-waterline.js",
   "directories": {
