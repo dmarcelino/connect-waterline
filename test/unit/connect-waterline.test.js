@@ -106,6 +106,7 @@ var assert_session_equals = function (sid, data, session) {
         var cookieJSON = data.cookie.toJSON();
         delete session.session.cookie.expires;
         delete cookieJSON.expires;
+        
         assert.deepEqual(session.session.cookie, cookieJSON);
       }
       else {
@@ -621,6 +622,29 @@ function runTests(testType){
       store.get(sid, function (err, session) {
         assert.equal(err, null);
         assert.deepEqual(session, { key1: 1, key2: 'two' });
+        done();
+      });
+    });
+  });
+  
+  it('should set and get session', function (done) {
+    var sid = 'test_set_get-sid';
+    var data = make_data();
+    data.expires = new Date(new Date().getTime() + 1*60*60*1000);
+
+    store.set(sid, data, function (err) {
+      assert.equal(err, null);
+
+      // Verify it was saved
+      store.get(sid, function (err, session) {
+        assert.equal(err, null);
+        
+        // assert_session_equals fails when comparing expires dates, lets circumvent that for now
+        assert.equal(new Date(data.expires).getTime(), new Date(session.expires).getTime());
+        delete data.expires;
+        delete session.expires;
+        
+        assert_session_equals(sid, data, { sid: sid, session: session });
         done();
       });
     });
