@@ -304,9 +304,6 @@ describe('connect-waterline', function(){
       });
      
       it.optional('should get session with custom unserializer', function (done) {
-        if(settings.skipUnserializer){
-          this.skip();
-        }
       
         var sid = 'test_get_custom_unserializer-sid';
         var data = make_data();
@@ -624,13 +621,6 @@ function runTests(testType){
   
   
 function runNoStringifyTests(testType){
-  if(settings.alwaysStringify){
-    // Skip no stringify tests
-    it('should set session without stringify');
-    it('should set session cookie without stringify');
-    it('should set expires without stringify');
-    return;
-  }
 
   var store, waterline, collection;  
 
