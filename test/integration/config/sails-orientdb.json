@@ -1,0 +1,12 @@
+{
+  "config": {
+    "host": "localhost",
+    "database": "connect",
+    "port": 2424,
+    "user": "root",
+    "password": "root",
+    "options": {
+      "databaseType": "document"
+    }
+  }
+}
