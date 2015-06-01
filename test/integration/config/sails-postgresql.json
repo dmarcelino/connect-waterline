@@ -7,6 +7,5 @@
     "port": 5432,
     "schema": true,
     "ssl": false
-  },
-  "skipUnserializer": true
+  }
 }
