@@ -105,6 +105,7 @@ var options = {
   },
   connections: {
     'connect-waterline': {
+      adapter: 'default'
       // specific adapter connection options
       // user: '',
       // password: '',
