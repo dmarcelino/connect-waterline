@@ -118,10 +118,21 @@ var assert_session_equals = function (sid, data, session) {
   assert.strictEqual(session.sid, sid);
 };
 
-var open_db = function (options, callback) {
+var open_db = function (options, testVars, callback) {
+  if(!callback){
+    callback = testVars;
+    testVars = undefined;
+  }
+  
   var store = new WaterlineStore(options);
   store.once('connected', function () {
-    callback(this, this.waterline, this.collection);
+    if(!testVars){
+      return callback(this, this.waterline, this.collection);
+    }
+    testVars.store = this;
+    testVars.waterline = this.waterline;
+    testVars.collection = this.collection;
+    callback();
   });
 };
 
@@ -130,6 +141,14 @@ var cleanup_store = function (store, cb) {
 };
 
 var cleanup = function (store, waterline, collection, callback) {
+  if(arguments.length === 2){
+    var testVars = store;
+    callback = waterline;
+    store = testVars.store;
+    waterline = testVars.waterline;
+    collection = testVars.collection;
+  }
+  
   collection.drop(function () {
     //db.close();
     cleanup_store(store, callback);
@@ -144,6 +163,16 @@ describe('connect-waterline', function(){
     }
   });
   
+  it('should throw error with empty options', function (done) {
+    assert.throws(
+      function () {
+        new MongoStore({});
+      },
+      Error);
+  
+    done();
+  });
+  
   describe('creating new connection', function(done){
     
     describe('stringify', function(done){
@@ -153,16 +182,6 @@ describe('connect-waterline', function(){
     describe('no stringify', function(done){
       runNoStringifyTests('new_connection');
     });
-    
-    it('should throw error with empty options', function (done) {
-      assert.throws(
-        function () {
-          new MongoStore({});
-        },
-        Error);
-    
-      done();
-    }); 
      
     it('should set session with default expiration', function (done) {
       var defaultExpirationTime = 10101;  // defaultExpirationTime is deprecated, so we use ttl
@@ -234,7 +253,7 @@ describe('connect-waterline', function(){
     
     describe('custom serializer', function(){
       
-      var store, waterline, collection;
+      var testVars = {};
       
       before(function(done){
         var serializerOptions = _.defaults({
@@ -245,18 +264,11 @@ describe('connect-waterline', function(){
           sessionType: 'string'
         }, options);
         
-        function open_db_done (_store, _waterline, _collection) {
-          store = _store;
-          waterline = _waterline;
-          collection = _collection;
-          done();
-        }
-        
-        open_db(serializerOptions, open_db_done);
+        open_db(serializerOptions, testVars, done);
       });
       
       after(function(done){
-        cleanup(store, waterline, collection, done);
+        cleanup(testVars, done);
       });
       
       it.optional('should set session with custom serializer', function (done) {
@@ -265,10 +277,10 @@ describe('connect-waterline', function(){
             dataWithIce = JSON.parse(JSON.stringify(data));
     
         dataWithIce.ice = 'test-1';
-        store.set(sid, data, function (err) {
+        testVars.store.set(sid, data, function (err) {
           assert.equal(err, null);
     
-          collection.findOne({ sid: sid }, function (err, session) {
+          testVars.collection.findOne({ sid: sid }, function (err, session) {
             assert.deepEqual(session.session, JSON.stringify(dataWithIce));
             assert.strictEqual(session.sid, sid);
             done();
@@ -357,7 +369,7 @@ describe('connect-waterline', function(){
       });
     });
      
-      it('should lazy touch session sync', function (done) {
+    it('should lazy touch session sync', function (done) {
       open_db(lazyOptions, function (store, db, collection) {
     
         var sid = 'test_lazy_touch-sid-sync',
